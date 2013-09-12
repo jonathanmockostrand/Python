@@ -1,59 +1,70 @@
-##############################################################################
+################################################################################
 #
-#This file contains a class that will read in the time, pressure, wind speed, 
-#and wind direction for a given bouy data .dat file
+#Jonathan Strand
+#Dept. of Geology & Geophysics, TAMU. 2013-09-11
+#Python for Geoscientists
 #
-#The data is stored in a local dictionary (data) and passed to the global 
-#variable (data.data) and printed 
+################################################################################
 #
-##############################################################################
+#This script contains a python class that will read date, sea-level pressure,
+#wind speed, and wind direction from a NOAA bouy data file. Wind speed and
+#direction has been converted to northward and eastward wind vectors.
 #
-#Created by: Taylor Sansom
-#September 11, 2013
+#http://www.ndbc.noaa.gov/download_data.php?filename=burl1h2011.txt.gz&dir=data/historical/stdmet/
 #
-##############################################################################
+################################################################################
 
 import numpy as np
 import datetime as dt
 
-class getdata_c():
-    
-    def __init__(self, file):
+class burl1_2011():
+    '''
+    Function:
+        noaa_convert(file)
+
+    Input:
+        file.dat
         
-        self.file=file
+    Output:
+        Date as datetime
+        Pressure as sea-level pressure
+        wU and wV as Components U and V of wind vector 
+        (converted from wind speed and direction)
+    '''
     
-        f=open(self.file)
-    
-        pres = []
-        wspd = []
-        wdir = []
+    def __init__(self, datafile):
+        
+        self.datafile = datafile
+        f = open(self.datafile)
+
         date = []
-        u_wind = []
-        v_wind = []
-    
+        pressure = []
+        wspeed = []
+        wdirection = []
+
         for line in f.readlines()[2:]:
             data = line.split()
-            pres.append( float(data[12]) )
-            wdir.append( float(data[5]) * np.pi/180 )
-            wspd.append( float(data[6]) )
-            date.append( str(data[0] + data[1] + data[2] + data[3] +  data[4]) )
-            
-        pres = np.array(pres)
-        wdir = np.array(wdir)
-        wspd = np.array(wspd)
-        date = np.array(date)
-        
-        u_wind = -wspd * np.sin(wdir)
-        v_wind = -wspd * np.cos(wdir)
-                
-        date = [ dt.datetime.strptime(date[x], "%Y%m%d%H%M") for x in range(len(date)) ]
-        
-        self.data={'date': np.array(date), 'u_wind': np.array(wdir), 'v_wind': np.array(wdir), 'pres': np.array(pres)}
-        
-    def __repr__(self):
-        return self.data
-            
-        
-data=getdata_c('burl1_2011.dat')
+            YYYY = int(data[0])
+            MM = int(data[1])
+            DD = int(data[2])
+            hh = int(data[3])
+            mm = int(data[4])
+    
+            date.append( dt.datetime(YYYY, MM, DD, hh, mm) )
+            pressure.append( float(data[12]) )
+            wspeed.append ( float(data[6]) )
+            wdirection.append ( float(data[5]) )
 
-print data.data
+        date = np.array(date)
+        pressure = np.array(pressure)
+        wspeed = np.array(wspeed)
+        wdirection = np.array(wdirection) 
+        U = np.array( -wspeed * np.sin(wdirection * np.pi/180) )
+        V = np.array( -wspeed * np.cos(wdirection * np.pi/180) )
+
+        self.date = date
+        self.pressure = pressure
+        self.U = U
+        self.V = V
+        
+d11 = burl1_2011('burl1_2011.dat')
